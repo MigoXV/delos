@@ -33,7 +33,7 @@ class GrpcPlayer:
     def __init__(self, env_id: str):
         self.env_id = env_id
         # 创建环境时指定渲染模式，以便支持视频帧获取
-        self.env = gym.make(env_id, render_mode="rgb_array")
+        self.env = gym.make(env_id, render_mode=None)
         self._lock = threading.Lock()
 
     # --------- 空间/规格 ---------

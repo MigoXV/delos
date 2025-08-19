@@ -1,8 +1,10 @@
 # client.py
 import argparse
 import time
-import numpy as np
+
 import grpc
+import numpy as np
+from tqdm import tqdm
 
 from delos.proto import env_pb2, env_pb2_grpc
 
@@ -25,27 +27,29 @@ def main(addr: str, seed: int, steps: int):
     obs = np.array(reset_resp.observation, dtype=np.float32).reshape(obs_shape)
 
     ep_return, t = 0.0, 0
-    while t < steps:
-        # 随机动作（示范）：真实训练时改为 policy(obs) 推断
-        action = np.random.uniform(low=act_low, high=act_high, size=act_shape).astype(
-            np.float32
-        )
+    with tqdm(total=steps, leave=False) as pbar:
+        while pbar.n < steps:
+            # 随机动作（示范）：真实训练时改为 policy(obs) 推断
+            action = np.random.uniform(low=1, high=2, size=act_shape).astype(
+                np.float32
+            )
 
-        # 发送一步
-        step_resp = stub.Step(env_pb2.StepRequest(action=action.ravel().tolist()))
-        obs = np.array(step_resp.observation, dtype=np.float32).reshape(obs_shape)
-        ep_return += step_resp.reward
-        t += 1
+            # 发送一步
+            step_resp = stub.Step(env_pb2.StepRequest(action=action.ravel().tolist()))
+            obs = np.array(step_resp.observation, dtype=np.float32).reshape(obs_shape)
+            ep_return += step_resp.reward
+            t += 1
+            pbar.update(1)
 
-        # 处理终止/截断并重置
-        if step_resp.terminated or step_resp.truncated:
-            print(f"Episode done at t={t}, return={ep_return:.2f}")
-            ep_return, t = 0.0, 0
-            reset_resp = stub.Reset(env_pb2.ResetRequest(seed=-1))
-            obs = np.array(reset_resp.observation, dtype=np.float32).reshape(obs_shape)
+            # 处理终止/截断并重置
+            if step_resp.terminated or step_resp.truncated:
+                tqdm.write(f"Episode done at t={t}, return={ep_return:.2f}")
+                ep_return, t = 0.0, 0
+                reset_resp = stub.Reset(env_pb2.ResetRequest(seed=-1))
+                obs = np.array(reset_resp.observation, dtype=np.float32).reshape(obs_shape)
 
-        # 可选：慢放观察
-        # time.sleep(0.01)
+            # 可选：慢放观察
+            # time.sleep(0.01)
 
     # 结束前关闭
     stub.Close(env_pb2.google_dot_protobuf_dot_empty__pb2.Empty())
@@ -58,6 +62,6 @@ if __name__ == "__main__":
         "--addr", type=str, default="127.0.0.1:50051", help="server 地址"
     )
     parser.add_argument("--seed", type=int, default=42, help="复位种子，<0 表示不设")
-    parser.add_argument("--steps", type=int, default=1000, help="最多步数")
+    parser.add_argument("--steps", type=int, default=100000, help="最多步数")
     args = parser.parse_args()
     main(args.addr, args.seed, args.steps)
