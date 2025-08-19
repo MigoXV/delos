@@ -1,4 +1,5 @@
 from concurrent import futures
+import time
 
 import grpc
 from google.protobuf import empty_pb2
@@ -51,6 +52,49 @@ class EnvServicer(env_pb2_grpc.EnvServicer):
     def Close(self, request, context):
         self.player.close()
         return empty_pb2.Empty()
+
+    def StreamFrames(self, request, context):
+        """流式传输环境视频帧"""
+        # 提取请求参数
+        width = request.width if request.width > 0 else None
+        height = request.height if request.height > 0 else None
+        mode = request.mode if request.mode else "rgb_array"
+        
+        try:
+            frame_count = 0
+            max_frames = 1000  # 限制最大帧数，防止无限流式传输
+            
+            while frame_count < max_frames:
+                # 检查客户端是否仍然连接
+                if context.is_active():
+                    # 渲染当前帧
+                    frame_data = self.player.render_frame(width=width, height=height, mode=mode)
+                    
+                    # 构建响应
+                    response = env_pb2.FrameResponse(
+                        image_data=frame_data["image_data"],
+                        width=frame_data["width"],
+                        height=frame_data["height"],
+                        format=frame_data["format"],
+                        timestamp=frame_data["timestamp"],
+                        has_frame=frame_data["has_frame"]
+                    )
+                    
+                    yield response
+                    frame_count += 1
+                    
+                    # 控制帧率，大约 30 FPS
+                    time.sleep(1.0 / 30.0)
+                else:
+                    print("客户端断开连接")
+                    break
+                
+        except Exception as e:
+            print(f"流式传输视频帧时出错: {e}")
+            context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details(f"流式传输错误: {str(e)}")
+        finally:
+            print("视频帧流式传输结束")
 
 
 def serve(host: str, port: int, env_id: str):

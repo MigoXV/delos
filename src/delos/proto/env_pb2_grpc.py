@@ -3,7 +3,7 @@
 import grpc
 import warnings
 
-from delos.proto import env_pb2 as env__pb2
+from . import env_pb2 as env__pb2
 from google.protobuf import empty_pb2 as google_dot_protobuf_dot_empty__pb2
 
 GRPC_GENERATED_VERSION = '1.74.0'
@@ -55,6 +55,11 @@ class EnvStub(object):
                 request_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
                 response_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
                 _registered_method=True)
+        self.StreamFrames = channel.unary_stream(
+                '/env.Env/StreamFrames',
+                request_serializer=env__pb2.FrameRequest.SerializeToString,
+                response_deserializer=env__pb2.FrameResponse.FromString,
+                _registered_method=True)
 
 
 class EnvServicer(object):
@@ -84,6 +89,12 @@ class EnvServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def StreamFrames(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_EnvServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -106,6 +117,11 @@ def add_EnvServicer_to_server(servicer, server):
                     servicer.Close,
                     request_deserializer=google_dot_protobuf_dot_empty__pb2.Empty.FromString,
                     response_serializer=google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
+            ),
+            'StreamFrames': grpc.unary_stream_rpc_method_handler(
+                    servicer.StreamFrames,
+                    request_deserializer=env__pb2.FrameRequest.FromString,
+                    response_serializer=env__pb2.FrameResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -216,6 +232,33 @@ class Env(object):
             '/env.Env/Close',
             google_dot_protobuf_dot_empty__pb2.Empty.SerializeToString,
             google_dot_protobuf_dot_empty__pb2.Empty.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def StreamFrames(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_stream(
+            request,
+            target,
+            '/env.Env/StreamFrames',
+            env__pb2.FrameRequest.SerializeToString,
+            env__pb2.FrameResponse.FromString,
             options,
             channel_credentials,
             insecure,

@@ -1,5 +1,6 @@
 # ---> Python
 
+*.png
 data-bin/
 model-bin/
 outputs/

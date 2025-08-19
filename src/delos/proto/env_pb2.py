@@ -25,7 +25,7 @@ _sym_db = _symbol_database.Default()
 from google.protobuf import empty_pb2 as google_dot_protobuf_dot_empty__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\tenv.proto\x12\x03\x65nv\x1a\x1bgoogle/protobuf/empty.proto\"C\n\tSpaceSpec\x12\x0c\n\x04type\x18\x01 \x01(\t\x12\r\n\x05shape\x18\x02 \x03(\x03\x12\x0b\n\x03low\x18\x03 \x03(\x02\x12\x0c\n\x04high\x18\x04 \x03(\x02\"c\n\x0cSpecResponse\x12\x0e\n\x06\x65nv_id\x18\x01 \x01(\t\x12#\n\x0bobservation\x18\x02 \x01(\x0b\x32\x0e.env.SpaceSpec\x12\x1e\n\x06\x61\x63tion\x18\x03 \x01(\x0b\x32\x0e.env.SpaceSpec\"\x1c\n\x0cResetRequest\x12\x0c\n\x04seed\x18\x01 \x01(\x05\"$\n\rResetResponse\x12\x13\n\x0bobservation\x18\x01 \x03(\x02\"\x1d\n\x0bStepRequest\x12\x0e\n\x06\x61\x63tion\x18\x01 \x03(\x02\"Z\n\x0cStepResponse\x12\x13\n\x0bobservation\x18\x01 \x03(\x02\x12\x0e\n\x06reward\x18\x02 \x01(\x01\x12\x12\n\nterminated\x18\x03 \x01(\x08\x12\x11\n\ttruncated\x18\x04 \x01(\x08\x32\xce\x01\n\x03\x45nv\x12\x31\n\x04Spec\x12\x16.google.protobuf.Empty\x1a\x11.env.SpecResponse\x12.\n\x05Reset\x12\x11.env.ResetRequest\x1a\x12.env.ResetResponse\x12+\n\x04Step\x12\x10.env.StepRequest\x1a\x11.env.StepResponse\x12\x37\n\x05\x43lose\x12\x16.google.protobuf.Empty\x1a\x16.google.protobuf.Emptyb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\tenv.proto\x12\x03\x65nv\x1a\x1bgoogle/protobuf/empty.proto\"C\n\tSpaceSpec\x12\x0c\n\x04type\x18\x01 \x01(\t\x12\r\n\x05shape\x18\x02 \x03(\x03\x12\x0b\n\x03low\x18\x03 \x03(\x02\x12\x0c\n\x04high\x18\x04 \x03(\x02\"c\n\x0cSpecResponse\x12\x0e\n\x06\x65nv_id\x18\x01 \x01(\t\x12#\n\x0bobservation\x18\x02 \x01(\x0b\x32\x0e.env.SpaceSpec\x12\x1e\n\x06\x61\x63tion\x18\x03 \x01(\x0b\x32\x0e.env.SpaceSpec\"\x1c\n\x0cResetRequest\x12\x0c\n\x04seed\x18\x01 \x01(\x05\"$\n\rResetResponse\x12\x13\n\x0bobservation\x18\x01 \x03(\x02\"\x1d\n\x0bStepRequest\x12\x0e\n\x06\x61\x63tion\x18\x01 \x03(\x02\"Z\n\x0cStepResponse\x12\x13\n\x0bobservation\x18\x01 \x03(\x02\x12\x0e\n\x06reward\x18\x02 \x01(\x01\x12\x12\n\nterminated\x18\x03 \x01(\x08\x12\x11\n\ttruncated\x18\x04 \x01(\x08\";\n\x0c\x46rameRequest\x12\r\n\x05width\x18\x01 \x01(\x05\x12\x0e\n\x06height\x18\x02 \x01(\x05\x12\x0c\n\x04mode\x18\x03 \x01(\t\"x\n\rFrameResponse\x12\x12\n\nimage_data\x18\x01 \x01(\x0c\x12\r\n\x05width\x18\x02 \x01(\x05\x12\x0e\n\x06height\x18\x03 \x01(\x05\x12\x0e\n\x06\x66ormat\x18\x04 \x01(\t\x12\x11\n\ttimestamp\x18\x05 \x01(\x03\x12\x11\n\thas_frame\x18\x06 \x01(\x08\x32\x87\x02\n\x03\x45nv\x12\x31\n\x04Spec\x12\x16.google.protobuf.Empty\x1a\x11.env.SpecResponse\x12.\n\x05Reset\x12\x11.env.ResetRequest\x1a\x12.env.ResetResponse\x12+\n\x04Step\x12\x10.env.StepRequest\x1a\x11.env.StepResponse\x12\x37\n\x05\x43lose\x12\x16.google.protobuf.Empty\x1a\x16.google.protobuf.Empty\x12\x37\n\x0cStreamFrames\x12\x11.env.FrameRequest\x1a\x12.env.FrameResponse0\x01\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -44,6 +44,10 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_STEPREQUEST']._serialized_end=314
   _globals['_STEPRESPONSE']._serialized_start=316
   _globals['_STEPRESPONSE']._serialized_end=406
-  _globals['_ENV']._serialized_start=409
-  _globals['_ENV']._serialized_end=615
+  _globals['_FRAMEREQUEST']._serialized_start=408
+  _globals['_FRAMEREQUEST']._serialized_end=467
+  _globals['_FRAMERESPONSE']._serialized_start=469
+  _globals['_FRAMERESPONSE']._serialized_end=589
+  _globals['_ENV']._serialized_start=592
+  _globals['_ENV']._serialized_end=855
 # @@protoc_insertion_point(module_scope)
