@@ -1,18 +1,18 @@
-# server.py
-import argparse                         # 解析命令行参数
-from concurrent import futures          # gRPC 线程池
-import threading                        # 可加锁保护（若多环境）
-import numpy as np                      # 数值处理
-import grpc                             # gRPC 核心
-import gymnasium as gym                 # 环境
-from google.protobuf import empty_pb2   # Empty 消息
+import threading
+from concurrent import futures
 
-from delos.proto import env_pb2                          # protoc 生成
-from delos.proto import env_pb2_grpc                     # protoc 生成
+import grpc
+import gymnasium as gym
+import numpy as np
+from google.protobuf import empty_pb2
+
+from delos.proto import env_pb2, env_pb2_grpc
+
 
 def _flatten(x):
     """将任意形状的数组展平成 1D float32 列表。"""
     return np.asarray(x, dtype=np.float32).ravel().tolist()
+
 
 def _space_to_spec(space):
     """将 Gymnasium 空间描述转为 SpaceSpec。仅示范 Box。"""
@@ -29,8 +29,10 @@ def _space_to_spec(space):
             spec.shape.extend(list(space.shape))
     return spec
 
+
 class EnvServicer(env_pb2_grpc.EnvServicer):
     """gRPC 服务实现：封装单个 Gymnasium 环境。"""
+
     def __init__(self, env_id: str):
         # 创建环境；渲染若要取图像可设 render_mode="rgb_array"
         self.env_id = env_id
@@ -41,9 +43,9 @@ class EnvServicer(env_pb2_grpc.EnvServicer):
         # 返回空间元数据：便于客户端自检
         obs_spec = _space_to_spec(self.env.observation_space)
         act_spec = _space_to_spec(self.env.action_space)
-        return env_pb2.SpecResponse(env_id=self.env_id,
-                                    observation=obs_spec,
-                                    action=act_spec)
+        return env_pb2.SpecResponse(
+            env_id=self.env_id, observation=obs_spec, action=act_spec
+        )
 
     def Reset(self, request, context):
         # 可选种子：<0 或未设 -> 不设定
@@ -83,18 +85,13 @@ class EnvServicer(env_pb2_grpc.EnvServicer):
             self.env.close()
         return empty_pb2.Empty()
 
+
 def serve(host: str, port: int, env_id: str):
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=1))  # 单线程，保证环境安全
+    server = grpc.server(
+        futures.ThreadPoolExecutor(max_workers=1)
+    )  # 单线程，保证环境安全
     env_pb2_grpc.add_EnvServicer_to_server(EnvServicer(env_id), server)
     server.add_insecure_port(f"{host}:{port}")  # 本机开发用明文端口即可
     server.start()
     print(f"[gRPC Env] Serving {env_id} on {host}:{port}")
     server.wait_for_termination()
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--host", type=str, default="127.0.0.1", help="监听地址")
-    parser.add_argument("--port", type=int, default=50051, help="监听端口")
-    parser.add_argument("--env-id", type=str, default="Pendulum-v1", help="Gymnasium 环境 ID")
-    args = parser.parse_args()
-    serve(args.host, args.port, args.env_id)

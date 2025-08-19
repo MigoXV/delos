@@ -4,8 +4,8 @@ import time
 import numpy as np
 import grpc
 
-import env_pb2
-import env_pb2_grpc
+from delos.proto import env_pb2, env_pb2_grpc
+
 
 def main(addr: str, seed: int, steps: int):
     # 连接到服务端
@@ -27,7 +27,9 @@ def main(addr: str, seed: int, steps: int):
     ep_return, t = 0.0, 0
     while t < steps:
         # 随机动作（示范）：真实训练时改为 policy(obs) 推断
-        action = np.random.uniform(low=act_low, high=act_high, size=act_shape).astype(np.float32)
+        action = np.random.uniform(low=act_low, high=act_high, size=act_shape).astype(
+            np.float32
+        )
 
         # 发送一步
         step_resp = stub.Step(env_pb2.StepRequest(action=action.ravel().tolist()))
@@ -49,9 +51,12 @@ def main(addr: str, seed: int, steps: int):
     stub.Close(env_pb2.google_dot_protobuf_dot_empty__pb2.Empty())
     channel.close()
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--addr", type=str, default="127.0.0.1:50051", help="server 地址")
+    parser.add_argument(
+        "--addr", type=str, default="127.0.0.1:50051", help="server 地址"
+    )
     parser.add_argument("--seed", type=int, default=42, help="复位种子，<0 表示不设")
     parser.add_argument("--steps", type=int, default=1000, help="最多步数")
     args = parser.parse_args()
