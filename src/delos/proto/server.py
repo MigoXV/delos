@@ -1,88 +1,55 @@
-import threading
 from concurrent import futures
 
 import grpc
-import gymnasium as gym
-import numpy as np
 from google.protobuf import empty_pb2
 
 from delos.proto import env_pb2, env_pb2_grpc
+from delos.proto.grpc_player import GrpcPlayer
 
-
-def _flatten(x):
-    """将任意形状的数组展平成 1D float32 列表。"""
-    return np.asarray(x, dtype=np.float32).ravel().tolist()
-
-
-def _space_to_spec(space):
-    """将 Gymnasium 空间描述转为 SpaceSpec。仅示范 Box。"""
+def _dict_to_space_spec(info: dict) -> env_pb2.SpaceSpec:
+    """将仿真返回的空间 dict 转为 SpaceSpec。"""
     spec = env_pb2.SpaceSpec()
-    if space.__class__.__name__ == "Box":
-        spec.type = "Box"
-        spec.shape.extend(list(space.shape))
-        # 上下界：无穷大/小用 float('inf') 表示；转为 float32 更紧凑
-        spec.low.extend(np.asarray(space.low, dtype=np.float32).ravel().tolist())
-        spec.high.extend(np.asarray(space.high, dtype=np.float32).ravel().tolist())
-    else:
-        spec.type = space.__class__.__name__
-        if hasattr(space, "shape") and space.shape is not None:
-            spec.shape.extend(list(space.shape))
+    spec.type = info.get("type", "")
+    for v in info.get("shape", []) or []:
+        spec.shape.append(int(v))
+    # 仅 Box 有 low/high
+    for v in info.get("low", []) or []:
+        spec.low.append(float(v))
+    for v in info.get("high", []) or []:
+        spec.high.append(float(v))
     return spec
 
 
 class EnvServicer(env_pb2_grpc.EnvServicer):
-    """gRPC 服务实现：封装单个 Gymnasium 环境。"""
+    """gRPC 服务实现：仅负责将消息与 Player 的纯 Python 数据互转。"""
 
     def __init__(self, env_id: str):
-        # 创建环境；渲染若要取图像可设 render_mode="rgb_array"
-        self.env_id = env_id
-        self.env = gym.make(env_id)
-        self.lock = threading.Lock()  # 若未来并发访问，这里可保护临界区
+        self.player = GrpcPlayer(env_id)
 
     def Spec(self, request, context):
-        # 返回空间元数据：便于客户端自检
-        obs_spec = _space_to_spec(self.env.observation_space)
-        act_spec = _space_to_spec(self.env.action_space)
+        # 返回空间元数据：从 player 获取并构建 protobuf
+        spec_dict = self.player.get_spec()
+        obs_spec = _dict_to_space_spec(spec_dict["observation"])
+        act_spec = _dict_to_space_spec(spec_dict["action"])
         return env_pb2.SpecResponse(
-            env_id=self.env_id, observation=obs_spec, action=act_spec
+            env_id=spec_dict["env_id"], observation=obs_spec, action=act_spec
         )
 
     def Reset(self, request, context):
-        # 可选种子：<0 或未设 -> 不设定
-        seed = request.seed if request.seed >= 0 else None
-        with self.lock:
-            obs, _info = self.env.reset(seed=seed)
-        return env_pb2.ResetResponse(observation=_flatten(obs))
+        observation = self.player.reset(seed=request.seed)
+        return env_pb2.ResetResponse(observation=observation)
 
     def Step(self, request, context):
-        # 将动作列表还原为 numpy 并裁剪到动作空间范围（保险）
-        with self.lock:
-            act_space = self.env.action_space
-            # Pendulum 动作是 shape=(1,) 的 Box
-            if hasattr(act_space, "shape") and act_space.shape is not None:
-                action = np.array(request.action, dtype=np.float32)
-                action = action.reshape(act_space.shape)
-                # 若有上下界，进行裁剪，避免数值越界
-                if hasattr(act_space, "low"):
-                    low = np.asarray(act_space.low, dtype=np.float32)
-                    high = np.asarray(act_space.high, dtype=np.float32)
-                    action = np.clip(action, low, high)
-            else:
-                # 退化处理：直接取第一个标量
-                action = float(request.action[0]) if request.action else 0.0
-
-            obs, reward, terminated, truncated, _info = self.env.step(action)
-
+        result = self.player.step(list(request.action))
         return env_pb2.StepResponse(
-            observation=_flatten(obs),
-            reward=float(reward),
-            terminated=bool(terminated),
-            truncated=bool(truncated),
+            observation=result["observation"],
+            reward=result["reward"],
+            terminated=result["terminated"],
+            truncated=result["truncated"],
         )
 
     def Close(self, request, context):
-        with self.lock:
-            self.env.close()
+        self.player.close()
         return empty_pb2.Empty()
 
 
