@@ -1,0 +1,31 @@
+[project]
+name = "delos"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "zbh",email = "zbh@eacsu.cn"}
+]
+readme = "README.md"
+requires-python = ">=3.10,<3.13"
+dependencies = [
+    "grpcio (>=1.74.0,<2.0.0)",
+    "grpcio-tools (>=1.74.0,<2.0.0)",
+    "gymnasium (>=1.2.0,<2.0.0)",
+    "numpy",
+    "matplotlib (>=3.10.5,<4.0.0)",
+    "pillow (>=11.3.0,<12.0.0)",
+    "mypy-protobuf (>=3.6.0,<4.0.0)"
+]
+
+[[tool.poetry.source]]
+name = "tuna"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+priority = "primary"
+
+[tool.poetry]
+packages = [{include = "delos", from = "src"}]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
